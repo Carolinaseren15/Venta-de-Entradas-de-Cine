@@ -1,0 +1,7 @@
+[
+  { "cliente": "Caro", "peliculaId": 1, "cantidad": 2 },
+  { "cliente": "Meli", "peliculaId": 1, "cantidad": 1 },
+  { "cliente": "Facu", "peliculaId": 2, "cantidad": 3 },
+  { "cliente": "Juan", "peliculaId": 2, "cantidad": 1 },
+  { "cliente": "Emmi", "peliculaId": 1, "cantidad": 2 }
+]
