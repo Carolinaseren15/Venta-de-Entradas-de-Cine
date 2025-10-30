@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cine Básico</title>
+</head>
+<body>
+
+    <h1>Mi Cine</h1>
+
+    <h2>Películas Disponibles</h2>
+    <button id="btn-cargar">Actualizar Películas</button>
+    <ul id="lista-peliculas">
+        </ul>
+
+    <hr>
+
+    <h2>Hacer una Reserva</h2>
+    <form id="form-reserva">
+        <div>
+            <label for="cliente">Nombre:</label>
+            <input id="cliente" type="text" placeholder="Tu nombre" required>
+        </div>
+        <div>
+            <label for="peliculaId">ID de Película:</label>
+            <input id="peliculaId" type="number" placeholder="Ej: 1" required>
+        </div>
+        <div>
+            <label for="cantidad">Cantidad:</label>
+            <input id="cantidad" type="number" placeholder="Ej: 2" required>
+        </div>
+        <button type="submit">Reservar</button>
+    </form>
+
+    <hr>
+    
+    <h2>Ranking</h2>
+    <button id="btn-ranking">Ver Ranking</button>
+    <ul id="lista-ranking">
+        </ul>
+
+
+    <script>
+        // La URL de tu servidor (el server.js que está corriendo)
+        const API_URL = 'http://localhost:3000';
+
+        // --- Seleccionamos los elementos del HTML ---
+        const listaPeliculas = document.getElementById('lista-peliculas');
+        const listaRanking = document.getElementById('lista-ranking');
+        const btnCargar = document.getElementById('btn-cargar');
+        const btnRanking = document.getElementById('btn-ranking');
+        const formReserva = document.getElementById('form-reserva');
+
+        // --- FUNCIÓN 1: Cargar y mostrar películas ---
+        async function cargarPeliculas() {
+            try {
+                // Llama a tu servidor (GET /peliculas)
+                const response = await fetch(API_URL + '/peliculas');
+                const peliculas = await response.json();
+
+                // Limpia la lista antes de agregar cosas
+                listaPeliculas.innerHTML = '';
+
+                // Agrega cada película a la lista <ul>
+                peliculas.forEach(p => {
+                    const li = document.createElement('li');
+                    li.textContent = `ID ${p.id} - ${p.titulo} (Disponibles: ${p.disponibles})`;
+                    listaPeliculas.appendChild(li);
+                });
+            } catch (error) {
+                alert('Error al cargar películas: ' + error.message);
+            }
+        }
+
+        // --- FUNCIÓN 2: Hacer una reserva ---
+        async function hacerReserva(event) {
+            // Evita que la página se recargue al apretar "Reservar"
+            event.preventDefault();
+
+            // Obtenemos los valores de los inputs
+            const cliente = document.getElementById('cliente').value;
+            const peliculaId = document.getElementById('peliculaId').value;
+            const cantidad = document.getElementById('cantidad').value;
+
+            // Preparamos los datos para enviar
+            const reserva = {
+                cliente: cliente,
+                peliculaId: parseInt(peliculaId),
+                cantidad: parseInt(cantidad)
+            };
+
+            try {
+                // Llama a tu servidor (POST /reservar)
+                const response = await fetch(API_URL + '/reservar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(reserva)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Si el servidor respondió bien (ej: 201)
+                    alert('¡Reserva exitosa! ' + data.mensaje);
+                    cargarPeliculas(); // Actualiza la lista de películas
+                    formReserva.reset(); // Limpia el formulario
+                } else {
+                    // Si el servidor respondió con error (ej: 400, 404)
+                    alert('Error en la reserva: ' + data.mensaje);
+                }
+            } catch (error) {
+                alert('Error de conexión: ' + error.message);
+            }
+        }
+        
+        // --- FUNCIÓN 3: Cargar y mostrar ranking ---
+        async function cargarRanking() {
+            try {
+                const response = await fetch(API_URL + '/peliculas/mas-reservadas');
+                const ranking = await response.json();
+
+                listaRanking.innerHTML = ''; // Limpia la lista
+
+                ranking.forEach(r => {
+                    const li = document.createElement('li');
+                    li.textContent = `${r.titulo} - Total: ${r.totalReservas}`;
+                    listaRanking.appendChild(li);
+                });
+            } catch (error) {
+                alert('Error al cargar el ranking: ' + error.message);
+            }
+        }
+
+
+        // --- EVENTOS ---
+        // Conecta las funciones a los botones
+        btnCargar.addEventListener('click', cargarPeliculas);
+        btnRanking.addEventListener('click', cargarRanking);
+        formReserva.addEventListener('submit', hacerReserva);
+
+        // Carga las películas apenas se abre la página
+        cargarPeliculas();
+
+    </script>
+</body>
+</html>
