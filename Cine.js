@@ -1,3 +1,4 @@
+const prompt = require("prompt-sync")({ sigint: true });
 // Películas
 const peliculas = [
   { id: 1, titulo: "Avatar 2", genero: "Ciencia ficción", horario: "18:00", sala: 1, disponibles: 40 },
@@ -10,7 +11,7 @@ const peliculas = [
 function agregarPelicula() {
     console.log("\n AGREGAR NUEVA PELÍCULA ");
   
-    const idNueva = parseInt(prompt("Ingrese el ID de la nueva película: "));
+    const idNueva = parseInt(prompt("Ingrese el ID de la nueva película: "), 10 );
   
     // Validar que el ID no exista
     const existe = peliculas.some(p => p.id === idNueva);
@@ -22,8 +23,8 @@ function agregarPelicula() {
     const titulo = prompt("Ingrese el título de la película: ").trim();
     const genero = prompt("Ingrese el género: ").trim();
     const horario = prompt("Ingrese el horario (hh:mm): ").trim();
-    const sala = parseInt(prompt("Ingrese la sala (ID): "));
-    const disponibles = parseInt(prompt("Ingrese la cantidad de entradas disponibles: "));
+    const sala = parseInt(prompt("Ingrese la sala (ID): "), 10 );
+    const disponibles = parseInt(prompt("Ingrese la cantidad de entradas disponibles: "), 10);
   
     // Validaciones básicas
     if (!titulo || !genero || !horario || isNaN(sala) || isNaN(disponibles) || disponibles <= 0) {
@@ -60,50 +61,44 @@ function agregarPelicula() {
       }))
     );
   }
-  
-
-const prompt = require("prompt-sync")({ sigint: true });
-
-function mostrarPeliculas() {
-  console.log("Mostrando lista de películas disponibles...");
+  function buscarPelicula(id) { return peliculas.find(p => p.id === id); }
+  function reservarEntrada() {
+  console.log("\nRESERVAR ENTRADA");
+  mostrarPeliculas();
+  const cliente = prompt("Nombre cliente: ").trim();
+  const idP = parseInt(prompt("ID película: "), 10);
+  const cant = parseInt(prompt("Cantidad: "), 10);
+  if (!cliente || isNaN(idP) || isNaN(cant) || cant <= 0) { console.log("Datos inválidos."); return; }
+  const p = buscarPelicula(idP);
+  if (!p) { console.log("Película no encontrada."); return; }
+  if (p.disponibles < cant) { console.log(`No hay suficientes. Disponibles: ${p.disponibles}`); return; }
+  p.disponibles -= cant;
+  reservas.push({ id: nextReservaId++, cliente, peliculaId: idP, cantidad: cant });
+  console.log("Reserva confirmada.");
 }
 
-function reservarEntrada() {
-  console.log("Reservando entrada...");
-}
+
 function menu() {
   let opcion = "";
-
   while (opcion !== "0") {
-    console.log("------ MENÚ DEL CINE ------");
-    console.log("1. Mostrar películas");
-    console.log("2. Reservar entrada");
-    console.log("0. Salir");
-
-    opcion = prompt("Elige una opción: ");
+    console.log("\n=== MENÚ CINE ===");
+    console.log("1 - Mostrar películas");
+    console.log("2 - Reservar entrada");
+    console.log("3 - Eliminar reserva");
+    console.log("4 - Películas más reservadas");
+    console.log("0 - Salir");
+    opcion = prompt("Elige una opción: ").trim();
 
     switch (opcion) {
-      case "1":
-        mostrarPeliculas();
-        break;
-
-      case "2":
-        reservarEntrada();
-        break;
-
-      case "0":
-        console.log("Saliendo del sistema...");
-        break;
-
-      default:
-        console.log("Opción no válida. Intenta de nuevo.");
-        break;
+      case "1": mostrarPeliculas(); break;
+      case "2": reservarEntrada(); break;
+      case "3": eliminarReserva(); break;
+      case "4": peliculasMasReservadas(); break;
+      case "0": console.log("Saliendo..."); break;
+      default: console.log("Opción no válida."); break;
     }
-
-    console.log("");
   }
 }
-
 
 // Salas
 const salas = [
@@ -120,8 +115,8 @@ function editarDisponibilidadSala() {
       }))
     );
   
-    const idSala = parseInt(prompt("Ingrese el ID de la sala que desea modificar: "));
-    const nuevaCapacidad = parseInt(prompt("Ingrese la nueva capacidad para la sala: "));
+    const idSala = parseInt(prompt("Ingrese el ID de la sala que desea modificar: "), 10);
+    const nuevaCapacidad = parseInt(prompt("Ingrese la nueva capacidad para la sala: "), 10);
   
     const sala = salas.find(s => s.id === idSala);
   
@@ -150,8 +145,8 @@ function editarDisponibilidadSala() {
       }))
     );
   
-    const idNueva = parseInt(prompt("Ingrese el ID de la nueva sala: "));
-    const capacidad = parseInt(prompt("Ingrese la capacidad de la sala: "));
+    const idNueva = parseInt(prompt("Ingrese el ID de la nueva sala: "), 10);
+    const capacidad = parseInt(prompt("Ingrese la capacidad de la sala: "), 10);
   
     // Validaciones
     if (isNaN(idNueva) || isNaN(capacidad)) {
@@ -182,9 +177,24 @@ function editarDisponibilidadSala() {
   
 
 // Reservas (inicial)
+// Inicializador para crear nuevos IDs de reserva
 const reservas = [
-  { cliente: "Caro", peliculaId: 1, cantidad: 2 },
+  { id: 1, cliente: "Caro", peliculaId: 1, cantidad: 2 },
 ];
+let nextReservaId = reservas.length > 0
+  ? Math.max(...reservas.map(r => r.id || 0 )) + 1
+  : 1;
+
+function listarReservas() {
+  console.log("\nReservas:");
+  if (reservas.length === 0) { console.log("  No hay reservas."); return; }
+  console.table(reservas.map(r => {
+    const p = buscarPelicula(r.peliculaId);
+    return { ID: r.id ?? "(Sin id)", Cliente: r.cliente, Pelicula: p ? p.titulo : "Eliminada", Cantidad: r.cantidad };
+  }));
+}
+
+
 function eliminarReserva() {
     console.log("\n ELIMINAR RESERVA ");
   
@@ -206,7 +216,7 @@ function eliminarReserva() {
       })
     );
   
-    const indice = parseInt(prompt("Ingrese el índice de la reserva que desea eliminar: "));
+    const indice = parseInt(prompt("Ingrese el índice de la reserva que desea eliminar: "), 10);
   
     if (isNaN(indice) || indice < 0 || indice >= reservas.length) {
       console.log(" Índice inválido.");
@@ -232,17 +242,27 @@ function eliminarReserva() {
     reservas.splice(indice, 1);
   
     console.log(" Reserva eliminada correctamente.");
-    mostrarReservas(); // Mostrar reservas actualizadas
+    listarReservas(); // Mostrar reservas actualizadas
   }
   
 
-// Mostrar películas disponibles
+// Mostrar películas disponibles (esta def)
 function mostrarPeliculas() {
-  console.log("Películas disponibles:");
-  peliculas.forEach(p => { //forEach pasea por el array de las peliculas (each: significa cada x objeto de array)
-    console.log(`ID: ${p.id}, Título: ${p.titulo}, Género: ${p.genero}, Horario: ${p.horario}, Sala: ${p.sala}, Entradas disponibles: ${p.disponibles}`);
-  }); //p es el objeto del array pj: la pelicula
+  console.log("\nPelículas disponibles:");
+  
+  // Mostrar la lista como tabla
+  console.table(
+    peliculas.map(p => ({
+      ID: p.id,
+      Título: p.titulo,
+      Género: p.genero,
+      Horario: p.horario,
+      Sala: p.sala,
+      Disponibles: p.disponibles
+    }))
+  );
 }
+
 function editarPelicula() {
     console.log("\n EDITAR PELÍCULA ");
     console.table(
@@ -256,7 +276,7 @@ function editarPelicula() {
       }))
     );
   
-    const idEditar = parseInt(prompt("Ingrese el ID de la película que desea editar: "));
+    const idEditar = parseInt(prompt("Ingrese el ID de la película que desea editar: "), 10);
     const pelicula = peliculas.find(p => p.id === idEditar);
   
     if (!pelicula) {
@@ -277,8 +297,8 @@ function editarPelicula() {
     if (nuevoTitulo.trim() !== "") pelicula.titulo = nuevoTitulo; //se usa para eliminar los espacios en 
     if (nuevoGenero.trim() !== "") pelicula.genero = nuevoGenero; //blanco al principio y al final de un texto (string).
     if (nuevoHorario.trim() !== "") pelicula.horario = nuevoHorario;
-    if (nuevaSala.trim() !== "" && !isNaN(parseInt(nuevaSala))) pelicula.sala = parseInt(nuevaSala);
-    if (nuevasDisponibles.trim() !== "" && !isNaN(parseInt(nuevasDisponibles))) pelicula.disponibles = parseInt(nuevasDisponibles);
+    if (nuevaSala.trim() !== "" && !isNaN(parseInt(nuevaSala, 10))) pelicula.sala = parseInt(nuevaSala, 10);
+    if (nuevasDisponibles.trim() !== "" && !isNaN(parseInt(nuevasDisponibles, 10))) pelicula.disponibles = parseInt(nuevasDisponibles, 10);
   
     console.log("Película actualizada correctamente.");
     console.table(
@@ -306,7 +326,7 @@ function editarPelicula() {
       }))
     );
   
-    const idEliminar = parseInt(prompt("Ingrese el ID de la película que desea eliminar: "));
+    const idEliminar = parseInt(prompt("Ingrese el ID de la película que desea eliminar: "), 10);
     const indice = peliculas.findIndex(p => p.id === idEliminar);
   
     if (indice === -1) {
@@ -348,7 +368,7 @@ function reservarEntradas(cliente, peliculaId, cantidad) {
 
   if (pelicula.disponibles >= cantidad) { //SI la cantidad de espacio disponible es mayor o igual a la cantidad disponible 
     pelicula.disponibles -= cantidad;     //se decrementa la cantidad reservada
-    reservas.push({ cliente, peliculaId, cantidad }); 
+    reservas.push({ id: nextReservaId++, cliente, peliculaId, cantidad });
     console.log(`Reserva confirmada para ${cliente}. Película: ${pelicula.titulo}, Cantidad: ${cantidad}`);
   } else {
     console.log(`No hay suficientes entradas disponibles. Disponibles: ${pelicula.disponibles}`);
@@ -382,7 +402,7 @@ function peliculasMasReservadas() {
   const ordenadas = Object.entries(conteo)
     .sort((a, b) => b[1] - a[1])                  
     .map(([peliculaId, total]) => {
-      const peli = peliculas.find(p => p.id === parseInt(peliculaId));
+      const peli = peliculas.find(p => p.id === parseInt(peliculaId, 10));
       return { titulo: peli.titulo, totalReservas: total };
     });
 
@@ -391,9 +411,10 @@ function peliculasMasReservadas() {
     console.log(`Título: ${p.titulo}, Total de reservas: ${p.totalReservas}`);
   });
 }
+menu();                        //Menú de las pelis
+/*
 mostrarPeliculas();            // Muestra todas las películas disponibles
 agregarPelicula()              //Agregar una pelicula más
-menu();                        //Menú de las pelis
 editarDisponibilidadSala()     //Poder editar la capacidad de la sala
 agregarSala()                  //Si habia 2 salas con esta función van haber 3 salas
 reservarEntradas("Luis", 2, 4);// Reserva 4 entradas para "Elementos"
@@ -403,4 +424,4 @@ mostrarDisponibilidad();      // Ver entradas disponibles luego de las reservas
 peliculasMasReservadas();     // Ver las películas más reservadas
 editarPelicula()             //Puedo editar las peliculas
 eliminarPelicula()           //Poder eliminar pelicula
-
+*/
